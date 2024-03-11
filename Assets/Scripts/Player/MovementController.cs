@@ -22,8 +22,12 @@ public enum MovementState
     WallRunning
 }
 
+[RequireComponent(typeof(PlayerJump))]
+[RequireComponent(typeof(PlayerCrouch))]
+[RequireComponent(typeof(PlayerWallRun))]
+[RequireComponent(typeof(PlayerSlide))]
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerMovement : MonoBehaviour
+public class MovementController : MonoBehaviour
 {
     // Child Objects
     [SerializeField] Transform c_CameraRoot; // Camera root object
@@ -34,22 +38,23 @@ public class PlayerMovement : MonoBehaviour
     KeyCode _jumpKey = KeyCode.Space;
     KeyCode _crouchKey = KeyCode.LeftControl;
 
+    private PlayerSlide c_Slide;
+    private PlayerJump c_Jump;
+    private PlayerCrouch c_Crouch;
+    private PlayerWallRun c_WallRun;
+
     [SerializeField] private CharacterController _characterController;
 
     [SerializeField] private float _playerSpeed = 1f; // How fast the player moves
     [SerializeField] private float _jumpForce; // How high the player jumps
     [SerializeField] private float _baseJumpForce; // Static version of jump force (Used for calculations)
 
-    private bool _isGrounded; // If the player is on the floor
+    public bool isGrounded { get; private set; } // If the player is on the floor
     [SerializeField] private int _jumpIteration;
     [SerializeField] private int _jumpIterationMaximum = 100;
-    private int _jumpCount;
-
-    private bool _GroundCheckBypass;
-    private float _jumpMultiplier;
     [SerializeField] private float _baseJumpMulitiplier = 1.0f;
 
-    private bool _lockControl; // If the players controls are locked
+    public bool ControlsLocked { private get; set; } // If the players controls are locked
 
     [SerializeField] private int _WallRunLength = 100;
     private int _UpForceCount;
@@ -78,6 +83,11 @@ public class PlayerMovement : MonoBehaviour
             _rb = rb;
         }
 
+        c_Crouch = GetComponent<PlayerCrouch>();
+        c_Jump = GetComponent<PlayerJump>();
+        c_Slide = GetComponent<PlayerSlide>();
+        c_WallRun = GetComponent<PlayerWallRun>();
+
         _rb.mass = 1;
         _rb.freezeRotation = true;
         _rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -85,18 +95,13 @@ public class PlayerMovement : MonoBehaviour
 
         _MoveState = MovementState.Idle;
 
-        _lockControl = false;
+        ControlsLocked = false;
 
         _UpForceCount = _WallRunLength;
         _cWallRunRotation = _wallRunRotationMaximum;
         _wallJumpLock = 1;
 
         _jumpForce = _baseJumpForce;
-        _jumpMultiplier = _baseJumpMulitiplier;
-        _jumpCount = 1;
-
-        _GroundCheckBypass = false;
-        _jumpMultiplier = 1.0f;
 
         Debug.Log("Running");
     }
@@ -137,8 +142,6 @@ public class PlayerMovement : MonoBehaviour
     {
         // if (_rb == null) throw new ArgumentException("Player does not contain rigidbody");
 
-        AttributeReseter();
-
         _MoveState = MovementState.Idle;
 
         if(_MoveState == MovementState.Idle)
@@ -153,24 +156,19 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        if (_lockControl != true)
+        if (ControlsLocked != true)
         {
             InputManager(); // Basic Movement
         }
 
 
         CheckIfGrounded(); // Grounded Check
-        Slide();
+        c_Slide.Slide();
         Crouch();
         WallRun();
+        c_Jump.JumpIN();
 
-        JumpIN(_jumpKey); // Jump Input
-    }
-
-    void AttributeReseter()
-    {
-        _GroundCheckBypass = false;
-        _jumpMultiplier = _baseJumpMulitiplier;
+        // JumpIN(_jumpKey); // Jump Input
     }
 
     /*
@@ -186,12 +184,12 @@ public class PlayerMovement : MonoBehaviour
         // Fires a raycast towards the ground, if it does not hit anything it returns is Grounded as false
         if (Physics.Raycast(this.transform.position, Vector3.down, out hit, transform.localScale.y / 2 + 0.6f))
         {
-            _isGrounded = true;
+            isGrounded = true;
             Debug.DrawLine(this.transform.position, hit.point, Color.red);
             return;
         }
 
-        _isGrounded = false;
+        isGrounded = false;
     }
     /*
      * INPUT FUNCTIONS
@@ -218,9 +216,19 @@ public class PlayerMovement : MonoBehaviour
         _rb.velocity = new Vector3(movement.x, _rb.velocity.y, movement.z);
     }
 
+    public MovementState CurrentState()
+    {
+        return _MoveState;
+    }
+
+    public void SetMovestate(MovementState mState)
+    {
+        _MoveState = mState;
+    }
+
     private void wallClimb()
     {
-        switch (_isGrounded)
+        switch (isGrounded)
         {
             case false:
                 break;
@@ -252,7 +260,7 @@ public class PlayerMovement : MonoBehaviour
         // Returns if player is not grounded
         if (_MoveState != MovementState.Crouch)
         {
-            switch (_isGrounded)
+            switch (isGrounded)
             {
                 case true:
                     break;
@@ -287,100 +295,6 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-
-    /*
-     * -------
-     *  Slide
-     * -------
-     */
-
-
-    // Function
-    // Allows the player to slide
-    private void Slide()
-    {
-        // Returns if player releases the C key
-        if (_MoveState != MovementState.Crouch)
-        {
-            if (Input.GetKeyUp(_crouchKey))
-            {
-                Debug.Log("Exiting Slide");
-                ExitSlide();
-                return;
-            }
-        }
-
-        switch (_isGrounded)
-        {
-            case true:
-                break;
-            case false:
-                return;
-        }
-
-        switch (_MoveState)
-        {
-            case MovementState.Idle:
-            case MovementState.Crouch:
-                return;
-            default:
-                break;
-        }
-
-        if (Input.GetKeyDown(_crouchKey))
-        {
-            _lockControl = true;
-
-            initialForce = _rb.velocity.magnitude;
-            initialForce *= 200f;
-        }
-
-        if (Input.GetKey(_crouchKey))
-        {
-            c_CameraRoot.localPosition -= new Vector3(c_CameraRoot.transform.localPosition.x, 1f * Time.deltaTime, c_CameraRoot.transform.localPosition.z);
-
-            if (c_CameraRoot.localPosition.y < 0.3f)
-            {
-                c_CameraRoot.localPosition = new Vector3(c_CameraRoot.transform.localPosition.x, 0.3f, c_CameraRoot.transform.localPosition.z);
-            }
-
-            initialForce /= 2;
-
-            _rb.AddForce(transform.forward * initialForce);
-
-            Mathf.Clamp(_jumpForce, _baseJumpForce, _baseJumpForce * 4);
-            _jumpMultiplier += 0.5f;
-
-            if (_rb.velocity.magnitude <= 1f)
-            {
-                ExitSlide(false);
-            }
-
-            _MoveState = MovementState.Sliding;
-
-            return;
-        }
-    }
-
-    private void ExitSlide(bool resetCamera = true)
-    {
-        switch (resetCamera)
-        {
-            case true:
-                c_CameraRoot.localPosition = new Vector3(0, 0.6f, 0.2f);
-                break;
-            default:
-                break;
-        }
-        _lockControl = false;
-        // _playerSpeed = tempSpeed;
-
-        _jumpForce = _baseJumpForce;
-        initialForce = 0;
-
-        _MoveState = MovementState.Crouch;
-    }
-
     /*
      * ----------
      *  WALL RUN
@@ -401,7 +315,7 @@ public class PlayerMovement : MonoBehaviour
                 return;
             }
 
-            switch (_isGrounded)
+            switch (isGrounded)
             {
                 case false:
                     break;
@@ -429,7 +343,7 @@ public class PlayerMovement : MonoBehaviour
                     _UpForceCount--;
                 }
 
-                _GroundCheckBypass = true;
+                c_Jump.groundedBypass = true;
                 _MoveState = MovementState.WallRunning;
             }
             else
@@ -448,7 +362,8 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 _UpForceCount = _WallRunLength;
-                _wallJumpLock = 1;
+
+                c_Jump.jumpCount = 1;
             }
 
             // c_CameraRoot.Rotate(Vector3.forward, _cWallRunRotation - _wallRunRotationMaximum, Space.Self);
@@ -462,8 +377,6 @@ public class PlayerMovement : MonoBehaviour
 
             _UpForceCount = _WallRunLength;
 
-            _wallJumpLock = 1;
-
             if (_cWallRunRotation == _wallRunRotationMaximum)
             {
                 return;
@@ -476,94 +389,10 @@ public class PlayerMovement : MonoBehaviour
             {
                 _cWallRunRotation -= _WallRunCameraRotationSpeed;
             }
+
+            c_Jump.jumpCount = 1;
         }
 
         c_CameraRoot.Rotate(Vector3.forward, _cWallRunRotation - _wallRunRotationMaximum, Space.Self);
-    }
-
-    void WallJump()
-    {
-        switch (_wallJumpLock != 0)
-        {
-            case true:
-                _jumpForce = _wallRunJumpPower;
-                _wallJumpLock -= 1;
-                return;
-            default:
-                break;
-        }
-    }
-
-    // Function
-    // Desc - Detects input to make the player Jump
-    // Func Calls - Jump()
-    void JumpIN(KeyCode key)
-    {
-        switch (Input.GetKeyDown(key))
-        {
-            case (true):
-                _jumpCount = 1;
-                break;
-            default:
-                break;
-        }
-
-        // Checks for other jump types
-        // This includes jumps that are not regular e.g. Off the ground.
-        switch (Input.GetKeyUp(key))
-        {
-            case (true):
-                _MoveState = MovementState.Idle;
-                _jumpIteration = 0;
-                break;
-            default:
-                break;
-        }
-
-        // Returns if player has completed the jump
-        if (_jumpIteration >= _jumpIterationMaximum)
-        {
-            _wallJumpLock = 0;
-            _MoveState = MovementState.Idle;
-            return;
-        }
-
-        if (_jumpCount == 0)
-        {
-            return;
-        }
-
-        switch (Input.GetKey(key))
-        {
-            case (true):
-                _jumpIteration++;
-                _MoveState = MovementState.Jumping;
-                JumpOUT(_GroundCheckBypass, _jumpMultiplier);
-                break;
-            default:
-                return;
-        }
-    }
-
-
-    private void JumpOUT(bool groundedBypass = false, float jumpMultiplier = 1.0f)
-    {
-        switch (groundedBypass)
-        {
-            case true:
-                break;
-            default:
-                switch (_isGrounded)
-                {
-                    case true:
-                        break;
-                    default:
-                        return;
-                }
-                break;
-       }
-        _rb.AddForce(Vector3.up * (_jumpForce) * (jumpMultiplier));
-        Debug.Log("Player has attempted to jump");
-        // _jumpIteration += 1;
     }
 }

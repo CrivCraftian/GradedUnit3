@@ -9927,6 +9927,11 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!4 &2070085374 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3643393367142888568, guid: c688cbe5109628147aec744945a11e00, type: 3}
+  m_PrefabInstance: {fileID: 3643393366549550170}
+  m_PrefabAsset: {fileID: 0}
 --- !u!43 &2085842971
 Mesh:
   m_ObjectHideFlags: 0
@@ -10764,6 +10769,22 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 204363416504184309, guid: c688cbe5109628147aec744945a11e00, type: 3}
+      propertyPath: c_CameraRoot
+      value: 
+      objectReference: {fileID: 2070085374}
+    - target: {fileID: 204363416504184309, guid: c688cbe5109628147aec744945a11e00, type: 3}
+      propertyPath: _slideMaximum
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 846530514640478259, guid: c688cbe5109628147aec744945a11e00, type: 3}
+      propertyPath: _baseJumpForce
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 846530514640478259, guid: c688cbe5109628147aec744945a11e00, type: 3}
+      propertyPath: _jumpIterationMaximum
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 3643393366922156488, guid: c688cbe5109628147aec744945a11e00, type: 3}
       propertyPath: m_RootOrder
       value: 2
