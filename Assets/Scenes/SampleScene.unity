@@ -10826,7 +10826,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3643393366922156500, guid: c688cbe5109628147aec744945a11e00, type: 3}
       propertyPath: _jumpIterationMaximum
-      value: 60
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3643393366922156500, guid: c688cbe5109628147aec744945a11e00, type: 3}
       propertyPath: _WallRunCameraRotationSpeed

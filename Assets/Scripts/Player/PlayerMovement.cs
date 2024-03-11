@@ -18,14 +18,13 @@ public enum MovementState
     Crouch,
     Running,
     Sliding,
-    Jumping
+    Jumping,
+    WallRunning
 }
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] Transform m_Transform;
-
     // Child Objects
     [SerializeField] Transform c_CameraRoot; // Camera root object
 
@@ -45,9 +44,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private bool _currentlyJumping; // If the player is currently jumping
     [SerializeField] private int _jumpIteration;
     [SerializeField] private int _jumpIterationMaximum = 100;
+    private int _jumpCount;
 
     private bool _GroundCheckBypass;
     private float _jumpMultiplier;
+    [SerializeField] private float _baseJumpMulitiplier = 1.0f;
 
     [SerializeField] private MovementState _MoveState;
 
@@ -95,7 +96,9 @@ public class PlayerMovement : MonoBehaviour
         _wallJumpLock = 1;
 
         _jumpForce = _baseJumpForce;
+        _jumpMultiplier = _baseJumpMulitiplier;
         _currentlyJumping = false;
+        _jumpCount = 1;
 
         _GroundCheckBypass = false;
         _jumpMultiplier = 1.0f;
@@ -139,6 +142,22 @@ public class PlayerMovement : MonoBehaviour
     {
         // if (_rb == null) throw new ArgumentException("Player does not contain rigidbody");
 
+        AttributeReseter();
+
+        _MoveState = MovementState.Idle;
+
+        if(_MoveState == MovementState.Idle)
+        {
+            if(_rb.velocity.magnitude > 1f)
+            {
+                _MoveState = MovementState.Running;
+            }
+            else
+            {
+                _MoveState = MovementState.Idle;
+            }
+        }
+
         if (_lockControl != true)
         {
             InputManager(); // Basic Movement
@@ -146,10 +165,17 @@ public class PlayerMovement : MonoBehaviour
 
 
         CheckIfGrounded(); // Grounded Check
-        JumpIN(_jumpKey); // Jump Input
-        Crouch();
         Slide();
+        Crouch();
         WallRun();
+
+        JumpIN(_jumpKey); // Jump Input
+    }
+
+    void AttributeReseter()
+    {
+        _GroundCheckBypass = false;
+        _jumpMultiplier = _baseJumpMulitiplier;
     }
 
     /*
@@ -279,7 +305,7 @@ public class PlayerMovement : MonoBehaviour
     private void Slide()
     {
         // Returns if player releases the C key
-        if (_MoveState == MovementState.Sliding)
+        if (_MoveState != MovementState.Crouch)
         {
             if (Input.GetKeyUp(_crouchKey))
             {
@@ -306,15 +332,12 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
 
-
         if (Input.GetKeyDown(_crouchKey))
         {
             _lockControl = true;
 
             initialForce = _rb.velocity.magnitude;
             initialForce *= 200f;
-
-            _MoveState = MovementState.Sliding;
         }
 
         if (Input.GetKey(_crouchKey))
@@ -331,12 +354,14 @@ public class PlayerMovement : MonoBehaviour
             _rb.AddForce(transform.forward * initialForce);
 
             Mathf.Clamp(_jumpForce, _baseJumpForce, _baseJumpForce * 4);
-            _jumpForce += 0.5f;
+            _jumpMultiplier += 0.5f;
 
             if (_rb.velocity.magnitude <= 1f)
             {
                 ExitSlide(false);
             }
+
+            _MoveState = MovementState.Sliding;
 
             return;
         }
@@ -409,7 +434,8 @@ public class PlayerMovement : MonoBehaviour
                     _UpForceCount--;
                 }
 
-                _isWallRunning = true;
+                _GroundCheckBypass = true;
+                _MoveState = MovementState.WallRunning;
             }
             else
             {
@@ -493,22 +519,36 @@ public class PlayerMovement : MonoBehaviour
         }
         */
 
-        // Checks for other jump types
-        // This includes jumps that are not regular e.g. Off the ground.
-
-        bool isLocked = false;
-        float jumpMultiplier = 1.0f;
-
-        switch(Input.GetKeyUp(key))
+        switch (Input.GetKeyDown(key))
         {
             case (true):
+                _jumpCount = 1;
+                break;
+            default:
+                break;
+        }
+
+        // Checks for other jump types
+        // This includes jumps that are not regular e.g. Off the ground.
+        switch (Input.GetKeyUp(key))
+        {
+            case (true):
+                _MoveState = MovementState.Idle;
                 _jumpIteration = 0;
                 break;
             default:
                 break;
         }
 
+        // Returns if player has completed the jump
         if (_jumpIteration >= _jumpIterationMaximum)
+        {
+            _wallJumpLock = 0;
+            _MoveState = MovementState.Idle;
+            return;
+        }
+
+        if (_wallJumpLock == 0)
         {
             return;
         }
@@ -517,7 +557,8 @@ public class PlayerMovement : MonoBehaviour
         {
             case (true):
                 _jumpIteration++;
-                JumpOUT(isLocked, jumpMultiplier);
+                _MoveState = MovementState.Jumping;
+                JumpOUT(_GroundCheckBypass, _jumpMultiplier);
                 break;
             default:
                 return;
@@ -540,8 +581,7 @@ public class PlayerMovement : MonoBehaviour
                         return;
                 }
                 break;
-        }
-
+       }
         _rb.AddForce(Vector3.up * (_jumpForce) * (jumpMultiplier));
         Debug.Log("Player has attempted to jump");
         // _jumpIteration += 1;
