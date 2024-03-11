@@ -27,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
 {
     // Child Objects
     [SerializeField] Transform c_CameraRoot; // Camera root object
+    [SerializeField] private MovementState _MoveState;
 
     Rigidbody _rb; // Player's rigidbody
 
@@ -40,8 +41,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _baseJumpForce; // Static version of jump force (Used for calculations)
 
     private bool _isGrounded; // If the player is on the floor
-    private bool _isWallRunning;
-    [SerializeField] private bool _currentlyJumping; // If the player is currently jumping
     [SerializeField] private int _jumpIteration;
     [SerializeField] private int _jumpIterationMaximum = 100;
     private int _jumpCount;
@@ -49,8 +48,6 @@ public class PlayerMovement : MonoBehaviour
     private bool _GroundCheckBypass;
     private float _jumpMultiplier;
     [SerializeField] private float _baseJumpMulitiplier = 1.0f;
-
-    [SerializeField] private MovementState _MoveState;
 
     private bool _lockControl; // If the players controls are locked
 
@@ -91,13 +88,11 @@ public class PlayerMovement : MonoBehaviour
         _lockControl = false;
 
         _UpForceCount = _WallRunLength;
-        _isWallRunning = false;
         _cWallRunRotation = _wallRunRotationMaximum;
         _wallJumpLock = 1;
 
         _jumpForce = _baseJumpForce;
         _jumpMultiplier = _baseJumpMulitiplier;
-        _currentlyJumping = false;
         _jumpCount = 1;
 
         _GroundCheckBypass = false;
@@ -453,8 +448,6 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 _UpForceCount = _WallRunLength;
-                _isWallRunning = false;
-
                 _wallJumpLock = 1;
             }
 
@@ -483,8 +476,6 @@ public class PlayerMovement : MonoBehaviour
             {
                 _cWallRunRotation -= _WallRunCameraRotationSpeed;
             }
-
-            _isWallRunning = false;
         }
 
         c_CameraRoot.Rotate(Vector3.forward, _cWallRunRotation - _wallRunRotationMaximum, Space.Self);
@@ -508,17 +499,6 @@ public class PlayerMovement : MonoBehaviour
     // Func Calls - Jump()
     void JumpIN(KeyCode key)
     {
-        /*
-        switch (_currentlyJumping)
-        {
-            case false:
-                break;
-
-            default:
-                return;
-        }
-        */
-
         switch (Input.GetKeyDown(key))
         {
             case (true):
@@ -548,7 +528,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if (_wallJumpLock == 0)
+        if (_jumpCount == 0)
         {
             return;
         }
