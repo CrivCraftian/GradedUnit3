@@ -119,6 +119,6 @@ public class PlayerSlide : MonoBehaviour
 
         _slideForce = 0f;
 
-        _mController.SetMovestate(MovementState.Crouch);
+        _mController.SetMovestate(MovementState.Idle);
     }
 }

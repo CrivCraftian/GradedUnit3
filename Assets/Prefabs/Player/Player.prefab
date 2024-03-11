@@ -223,18 +223,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   c_CameraRoot: {fileID: 3643393367142888568}
   _MoveState: 0
-  _characterController: {fileID: 0}
   _playerSpeed: 10
-  _jumpForce: 250
-  _baseJumpForce: 0
-  _jumpIteration: 0
-  _jumpIterationMaximum: 100
-  _baseJumpMulitiplier: 1
-  _WallRunLength: 100
-  _wallRunRotationMaximum: 10
-  _cWallRunRotation: 0
-  _WallRunCameraRotationSpeed: 0.5
-  _wallRunJumpPower: 1.5
 --- !u!114 &5585774879424516586
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -247,6 +236,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2fab36751704dd4b87f07181d728401, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  c_CameraRoot: {fileID: 3643393367142888568}
 --- !u!114 &846530514640478259
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -259,6 +249,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 823681dd8be2ef842b4b0b7a076a392d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _baseJumpForce: 20
+  _jumpIterationMaximum: 20
 --- !u!114 &204363416504184309
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -271,6 +263,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd11fa20278dfba48ad6a8c5dc926645, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  c_CameraRoot: {fileID: 3643393367142888568}
+  _slideMaximum: 200
 --- !u!114 &3120374601135614240
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -283,6 +277,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40ef7929b392b0c4a9f1c3821039df0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  c_CameraRoot: {fileID: 3643393367142888568}
+  _WallRunLength: 100
+  _wallRunRotationMaximum: 10
+  _cWallRunRotation: 10
+  _WallRunCameraRotationSpeed: 0.5
+  _wallRunJumpPower: 1.5
 --- !u!136 &3643393366922156494
 CapsuleCollider:
   m_ObjectHideFlags: 0

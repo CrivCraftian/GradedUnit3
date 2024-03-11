@@ -11,17 +11,17 @@ public class PlayerJump : MonoBehaviour
 
     private KeyCode _jumpKey = KeyCode.Space;
 
-    public float jumpMultiplier { get; set; } = 1.0f;
-    public bool groundedBypass { get; set; }
+    public float jumpMultiplier { get; set; } = 1.0f; // Jump Multiplier, allows other classes to increase jump power
+    public bool groundedBypass { get; set; } // Bypass to allow other classes to override the grounded check
 
     private float _jumpForce; // How high the player jumps
-    public int jumpCount { private get; set; }
-    private int _jumpIteration;
+    public int jumpCount { get; set; }
+    private int _jumpIteration; // Used to count how much force has been applied in the jump
 
-    [SerializeField] private float _baseJumpForce; // Static version of jump force (Used for calculations)
-    [SerializeField] private int _jumpIterationMaximum;
+    [SerializeField] private float _baseJumpForce; // The base value for jump force
+    [SerializeField] private int _jumpIterationMaximum; // Maximum Value for jump iterations
 
-    // Start is called before the first frame update
+    // Gets various components needed to Jump
     void Start()
     {
         _mController = GetComponent<MovementController>();
@@ -39,9 +39,12 @@ public class PlayerJump : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Clamps Jump Count to keep it from going below 0
         jumpCount = (int)Mathf.Clamp((float)jumpCount, 0, Mathf.Infinity);
     }
 
+    // Function
+    // Desc - Sets keybinding for Jump to a new Key
     public void SetKey(KeyCode key)
     {
         _jumpKey = key;
@@ -55,7 +58,10 @@ public class PlayerJump : MonoBehaviour
         switch (Input.GetKeyDown(_jumpKey))
         {
             case (true):
-                jumpCount = 1;
+                if (_mController.isGrounded == true)
+                {
+                    jumpCount = 1;
+                }
                 break;
             default:
                 break;
@@ -89,33 +95,18 @@ public class PlayerJump : MonoBehaviour
             case (true):
                 _jumpIteration++;
                 _mController.SetMovestate(MovementState.Jumping);
-                JumpOUT(groundedBypass, jumpMultiplier);
+                JumpOUT();
                 break;
             default:
                 return;
         }
     }
 
-
-    private void JumpOUT(bool groundedBypass = false, float jumpMultiplier = 1.0f)
+    // Function
+    // Desc - Applies upwards force to the player
+    private void JumpOUT()
     {
-        switch (groundedBypass)
-        {
-            case true:
-                break;
-            default:
-                switch (_mController.isGrounded)
-                {
-                    case true:
-                        break;
-                    default:
-                        return;
-                }
-                break;
-        }
-
         _playerRB.AddForce(Vector3.up * (_jumpForce) * (jumpMultiplier));
         Debug.Log("Player has attempted to jump");
-        // _jumpIteration += 1;
     }
 }
