@@ -22,7 +22,7 @@ public class PlayerWallRun : MonoBehaviour
     [SerializeField] private float _WallRunCameraRotationSpeed = 0.5f;
     [SerializeField] private float _wallRunJumpPower = 1.5f;
 
-    bool enteredWallJump;
+    bool enteredWallJump = false;
 
     // Start is called before the first frame update
     void Start()
@@ -60,10 +60,10 @@ public class PlayerWallRun : MonoBehaviour
                 default:
                     return;
             }
-
-            if(enteredWallJump)
+            if(enteredWallJump == false)
             {
                 c_Jump.jumpCount += 1;
+                enteredWallJump = true;
             }
 
             if (Input.GetKey(KeyCode.W))
@@ -87,10 +87,8 @@ public class PlayerWallRun : MonoBehaviour
                 }
 
                 c_Jump.jumpMultiplier = 1.5f;
-                c_Jump.groundedBypass = true;
+                // c_Jump.groundedBypass = true;
                 _mController.SetMovestate(MovementState.WallRunning);
-
-                enteredWallJump = false;
             }
             else
             {
@@ -108,6 +106,8 @@ public class PlayerWallRun : MonoBehaviour
                 }
 
                 _UpForceCount = _WallRunLength;
+
+                enteredWallJump = false;
             }
 
             // c_CameraRoot.Rotate(Vector3.forward, _cWallRunRotation - _wallRunRotationMaximum, Space.Self);
@@ -134,7 +134,7 @@ public class PlayerWallRun : MonoBehaviour
                 _cWallRunRotation -= _WallRunCameraRotationSpeed;
             }
 
-            enteredWallJump = true;
+            enteredWallJump = false;
         }
 
         c_CameraRoot.Rotate(Vector3.forward, _cWallRunRotation - _wallRunRotationMaximum, Space.Self);

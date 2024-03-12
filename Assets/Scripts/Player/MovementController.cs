@@ -48,6 +48,9 @@ public class MovementController : MonoBehaviour
 
     [SerializeField] private float _playerSpeed = 1f; // How fast the player moves
 
+    [SerializeField] public float _speedMultiplier = 1.5f;
+    [SerializeField] private float _baseSpeed = 1f;
+
     /*
      * CONSTRUCTOR
      */
@@ -172,7 +175,19 @@ public class MovementController : MonoBehaviour
     {
         PlayerMovement();
 
+        Run();
+    }
 
+    void Run()
+    {
+        if(Input.GetKey(KeyCode.LeftShift))
+        {
+            _playerSpeed = _baseSpeed * _speedMultiplier;
+        }
+        else
+        {
+            _playerSpeed = _baseSpeed;
+        }
     }
 
     void PlayerMovement()

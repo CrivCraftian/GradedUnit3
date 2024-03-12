@@ -15,11 +15,14 @@ public class PlayerJump : MonoBehaviour
     public bool groundedBypass { get; set; } // Bypass to allow other classes to override the grounded check
 
     private float _jumpForce; // How high the player jumps
-    public int jumpCount { get; set; }
+    private int _baseJumpCount = 2;
+    [SerializeField] public int jumpCount = 1;
     private int _jumpIteration; // Used to count how much force has been applied in the jump
 
     [SerializeField] private float _baseJumpForce; // The base value for jump force
     [SerializeField] private int _jumpIterationMaximum; // Maximum Value for jump iterations
+
+    bool leftGround = false;
 
     // Gets various components needed to Jump
     void Start()
@@ -58,10 +61,7 @@ public class PlayerJump : MonoBehaviour
         switch (Input.GetKeyDown(_jumpKey))
         {
             case (true):
-                if (_mController.isGrounded == true)
-                {
-                    jumpCount = 1;
-                }
+                jumpCount -= 1;
                 break;
             default:
                 break;
@@ -73,15 +73,22 @@ public class PlayerJump : MonoBehaviour
         {
             case (true):
                 _jumpIteration = 0;
+
+                leftGround = true;
+
                 break;
             default:
                 break;
         }
 
-        // Returns if player has completed the jump
+        if (_mController.isGrounded == true && leftGround == true || groundedBypass == true && leftGround == true)
+        {
+            jumpCount = _baseJumpCount;
+            leftGround = false;
+        }
+
         if (_jumpIteration >= _jumpIterationMaximum)
         {
-            jumpCount -= 1;
             return;
         }
 
@@ -107,6 +114,7 @@ public class PlayerJump : MonoBehaviour
     private void JumpOUT()
     {
         _playerRB.AddForce(Vector3.up * (_jumpForce) * (jumpMultiplier));
+
         Debug.Log("Player has attempted to jump");
     }
 }
